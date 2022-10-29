@@ -12,6 +12,8 @@ use concrete_core::crypto::lwe::LweCiphertext;
 use concrete_core::crypto::secret::generators::{EncryptionRandomGenerator, SecretRandomGenerator};
 use concrete_core::crypto::secret::{GlweSecretKey, LweSecretKey};
 use serde::{Deserialize, Serialize};
+use crate::parameters::DEBUG_PARAMETERS;
+// use wasm_bindgen::prelude::*;
 
 /// A structure containing the client key, which must be kept secret.
 ///
@@ -134,4 +136,158 @@ impl ClientKey {
         };
         cks
     }
+
+
+    pub fn decrypt_8bit(&self, x: [Ciphertext; 8]) -> [bool; 8]{
+        let mut res = [false; 8];
+        for i in 0..8{
+            res[i] = self.decrypt(&x[i]);
+        };
+        res
+    }
+
+    pub fn decode(&self, x: [bool; 8]) -> u8{
+        let mut res: u8 = 0;
+        for i in 0..8{
+            if x[i]{
+                res += 1 << i;
+            }
+            else{
+            }
+        };
+        res
+
+    }
+
+    pub fn decrypt_and_decode_8bit(&self, x: &[Ciphertext; 8]) -> u8{
+        let mut res = [false; 8];
+        for i in 0..8{
+            res[i] = self.decrypt(&x[i]);
+        };
+        return self.decode(res);
+    }
+
+    pub fn generate_public_key(&self) -> PublicKey{
+        let tmp0 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp1 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp2 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp3 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp4 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp5 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp6 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp7 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let mut res: [Ciphertext; 8] = [tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7];
+
+        for i in 0..8{
+            res[i] = self.zero_encrypt();
+        };
+
+        let pub_key = PublicKey{
+            key: res
+        };
+
+        pub_key
+    }
+
+
+    pub fn zero_encrypt(&self) -> Ciphertext {
+
+        let plain = Plaintext(0);
+        // instantiate an encryption random generator
+        let mut encryption_generator = EncryptionRandomGenerator::new(None);
+
+        // allocate the ciphertext
+        let mut ct = LweCiphertext::allocate(0_u32, self.parameters.lwe_dimension.to_lwe_size());
+
+        // encrypt the encoded boolean
+        self.lwe_secret_key.encrypt_lwe(
+            &mut ct,
+            &plain,
+            self.parameters.lwe_modular_std_dev,
+            &mut encryption_generator,
+        );
+
+        Ciphertext(ct)
+    }
+
+}
+
+
+#[derive(Serialize, Clone, Deserialize)]
+pub struct PublicKey{
+    pub key: [Ciphertext; 8]
+}
+
+impl PublicKey{
+    pub fn encrypt(&self, message: bool) -> Ciphertext{
+        // encode the boolean message
+        let plain: Plaintext<u32> = if message {
+            Plaintext(PLAINTEXT_TRUE)
+        } else {
+            Plaintext(PLAINTEXT_FALSE)
+        };
+
+        let tmp = &mut self.key[0].clone();
+
+        let (body, mask)= tmp.0.get_mut_body_and_mask();
+
+        body.0 = body.0.wrapping_add(plain.0);
+
+        tmp.to_owned()
+
+    }
+
+    pub fn encode(&self, x: u8) -> [bool; 8]{
+        let mut res = [false; 8];
+        let mut cnt = 0;
+        let mut tmp = x;
+        if x == 0{
+            let res = [false; 8];
+            return res;
+        }
+        else{
+            while tmp > 0{
+                if tmp % 2 == 0{
+                    res[cnt] = false;
+                }
+                else{
+                    res[cnt] = true;
+                }
+                tmp /= 2;
+                cnt += 1;
+            }
+            res
+        }
+    }
+
+    fn get_8_ciphers(&self) -> [Ciphertext; 8]{
+        let tmp0 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp1 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp2 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp3 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp4 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp5 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp6 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let tmp7 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        let res: [Ciphertext; 8] = [tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7];
+        res
+    }
+
+    pub fn encrypt_8bit(&self, x: [bool; 8]) -> [Ciphertext; 8]{
+        let mut res = self.get_8_ciphers();
+        for i in 0..8{
+            res[i] = self.encrypt(x[i]);
+        };
+        res
+    }
+
+    pub fn encode_and_encrypt_8bit(&self, x: u8) -> [Ciphertext; 8]{
+        let tmp = self.encode(x);
+        let mut res = self.get_8_ciphers();
+        for i in 0..8{
+            res[i] = self.encrypt(tmp[i]);
+        };
+        res
+    }
+
 }

@@ -73,6 +73,19 @@ impl BooleanParameters {
     }
 }
 
+pub const DEBUG_PARAMETERS: BooleanParameters = BooleanParameters {
+    lwe_dimension: LweDimension(16),
+    glwe_dimension: GlweDimension(1),
+    polynomial_size: PolynomialSize(1024),
+    lwe_modular_std_dev: StandardDev(0.0), // 2^{-13.44...}
+    glwe_modular_std_dev: StandardDev(0.0), // 2^{-24.9...}
+    pbs_base_log: DecompositionBaseLog(8),
+    pbs_level: DecompositionLevelCount(2),
+    ks_base_log: DecompositionBaseLog(2),
+    ks_level: DecompositionLevelCount(5),
+};
+
+
 /// Default parameter set.
 ///
 /// This parameter set ensures 128-bits of security, and a probability of error is upper-bounded by
