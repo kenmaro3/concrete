@@ -165,8 +165,8 @@ impl<Cont> FourierPolynomial<Cont> {
         ck_dim_eq!(self.polynomial_size().0 => poly_1.polynomial_size().0, poly_2.polynomial_size().0);
         #[cfg(not(target_feature = "avx2"))]
         regular_uhwap(self, poly_1, poly_2);
-        #[cfg(target_feature = "avx2")]
-        avx2_uhwap(self, poly_1, poly_2);
+        //#[cfg(target_feature = "avx2")]
+        //avx2_uhwap(self, poly_1, poly_2);
     }
     /// Adds the result of the element-wise product of `poly_1` with `poly_2`, and the result
     /// of the element-wise product of `poly_3` with `poly_4`, to $(self.len()/2)+2$ elements of
@@ -218,8 +218,8 @@ impl<Cont> FourierPolynomial<Cont> {
         );
         #[cfg(not(target_feature = "avx2"))]
         regular_uhwatp(self, poly_1, poly_2, poly_3, poly_4);
-        #[cfg(target_feature = "avx2")]
-        avx2_uhwatp(self, poly_1, poly_2, poly_3, poly_4);
+        //#[cfg(target_feature = "avx2")]
+        //avx2_uhwatp(self, poly_1, poly_2, poly_3, poly_4);
     }
 
     /// Updates two polynomials with the following operation:
@@ -310,10 +310,10 @@ impl<Cont> FourierPolynomial<Cont> {
         regular_uthwatp(
             result_1, result_2, poly_a_1, poly_a_2, poly_b, poly_c_1, poly_c_2, poly_d,
         );
-        #[cfg(target_feature = "avx2")]
-        avx2_uthwatp(
-            result_1, result_2, poly_a_1, poly_a_2, poly_b, poly_c_1, poly_c_2, poly_d,
-        );
+        //#[cfg(target_feature = "avx2")]
+        //avx2_uthwatp(
+        //    result_1, result_2, poly_a_1, poly_a_2, poly_b, poly_c_1, poly_c_2, poly_d,
+        //);
     }
 }
 
@@ -337,53 +337,53 @@ fn regular_uhwap<C1, C2, C3>(
     }
 }
 
-#[allow(unused)]
-fn avx2_uhwap<C1, C2, C3>(
-    res: &mut FourierPolynomial<C1>,
-    poly_1: &FourierPolynomial<C2>,
-    poly_2: &FourierPolynomial<C3>,
-) where
-    FourierPolynomial<C1>: AsMutTensor<Element = Complex64>,
-    FourierPolynomial<C2>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C3>: AsRefTensor<Element = Complex64>,
-{
-    #[cfg(target_arch = "x86")]
-    use std::arch::x86::*;
-    #[allow(unused_imports)]
-    #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::*;
-
-    let n = poly_1.as_tensor().len();
-    let index = n / 2 + 2;
-    for zip_args!(coeff_tmp_ref, coeff_a_i, coeff_b_i) in zip!(
-        res.as_mut_tensor().as_mut_slice()[..index].chunks_mut(2),
-        poly_1.as_tensor().as_slice()[..index].chunks(2),
-        poly_2.as_tensor().as_slice()[..index].chunks(2)
-    ) {
-        unsafe {
-            let vec_a: __m256d = _mm256_setr_pd(
-                coeff_a_i[0].re,
-                coeff_a_i[0].im,
-                coeff_a_i[1].re,
-                coeff_a_i[1].im,
-            );
-            let mut vec_b: __m256d = _mm256_setr_pd(
-                coeff_b_i[0].re,
-                coeff_b_i[0].im,
-                coeff_b_i[1].re,
-                coeff_b_i[1].im,
-            );
-
-            let neg: __m256d = _mm256_setr_pd(1.0, -1.0, 1.0, -1.0);
-            let vec_ab = _mm256_mul_pd(vec_a, vec_b);
-            vec_b = _mm256_permute_pd(vec_b, 0x5);
-            vec_b = _mm256_mul_pd(vec_b, neg);
-            let vec_ab_bis = _mm256_mul_pd(vec_a, vec_b);
-            let resref: *mut __m256d = coeff_tmp_ref.as_mut_ptr() as *mut __m256d;
-            *resref = _mm256_add_pd(_mm256_hsub_pd(vec_ab, vec_ab_bis), *resref);
-        }
-    }
-}
+//#[allow(unused)]
+//fn avx2_uhwap<C1, C2, C3>(
+//    res: &mut FourierPolynomial<C1>,
+//    poly_1: &FourierPolynomial<C2>,
+//    poly_2: &FourierPolynomial<C3>,
+//) where
+//    FourierPolynomial<C1>: AsMutTensor<Element = Complex64>,
+//    FourierPolynomial<C2>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C3>: AsRefTensor<Element = Complex64>,
+//{
+//    #[cfg(target_arch = "x86")]
+//    use std::arch::x86::*;
+//    #[allow(unused_imports)]
+//    #[cfg(target_arch = "x86_64")]
+//    use std::arch::x86_64::*;
+//
+//    let n = poly_1.as_tensor().len();
+//    let index = n / 2 + 2;
+//    for zip_args!(coeff_tmp_ref, coeff_a_i, coeff_b_i) in zip!(
+//        res.as_mut_tensor().as_mut_slice()[..index].chunks_mut(2),
+//        poly_1.as_tensor().as_slice()[..index].chunks(2),
+//        poly_2.as_tensor().as_slice()[..index].chunks(2)
+//    ) {
+//        unsafe {
+//            let vec_a: __m256d = _mm256_setr_pd(
+//                coeff_a_i[0].re,
+//                coeff_a_i[0].im,
+//                coeff_a_i[1].re,
+//                coeff_a_i[1].im,
+//            );
+//            let mut vec_b: __m256d = _mm256_setr_pd(
+//                coeff_b_i[0].re,
+//                coeff_b_i[0].im,
+//                coeff_b_i[1].re,
+//                coeff_b_i[1].im,
+//            );
+//
+//            let neg: __m256d = _mm256_setr_pd(1.0, -1.0, 1.0, -1.0);
+//            let vec_ab = _mm256_mul_pd(vec_a, vec_b);
+//            vec_b = _mm256_permute_pd(vec_b, 0x5);
+//            vec_b = _mm256_mul_pd(vec_b, neg);
+//            let vec_ab_bis = _mm256_mul_pd(vec_a, vec_b);
+//            let resref: *mut __m256d = coeff_tmp_ref.as_mut_ptr() as *mut __m256d;
+//            *resref = _mm256_add_pd(_mm256_hsub_pd(vec_ab, vec_ab_bis), *resref);
+//        }
+//    }
+//}
 
 #[allow(unused)]
 fn regular_uhwatp<C1, C2, C3, C4, C5>(
@@ -411,65 +411,65 @@ fn regular_uhwatp<C1, C2, C3, C4, C5>(
     }
 }
 
-#[allow(unused)]
-fn avx2_uhwatp<C1, C2, C3, C4, C5>(
-    res: &mut FourierPolynomial<C1>,
-    poly_1: &FourierPolynomial<C2>,
-    poly_2: &FourierPolynomial<C3>,
-    poly_3: &FourierPolynomial<C4>,
-    poly_4: &FourierPolynomial<C5>,
-) where
-    FourierPolynomial<C1>: AsMutTensor<Element = Complex64>,
-    FourierPolynomial<C2>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C3>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C4>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C5>: AsRefTensor<Element = Complex64>,
-{
-    #[cfg(target_arch = "x86")]
-    use std::arch::x86::*;
-    #[allow(unused_imports)]
-    #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::*;
-
-    let n = poly_1.as_tensor().len();
-    let index = n / 2 + 2;
-    for zip_args!(res_ref, a_i, b_i, c_i, d_i) in zip!(
-        res.as_mut_tensor().as_mut_slice()[..index].chunks_mut(2),
-        poly_1.as_tensor().as_slice()[..index].chunks(2),
-        poly_2.as_tensor().as_slice()[..index].chunks(2),
-        poly_3.as_tensor().as_slice()[..index].chunks(2),
-        poly_4.as_tensor().as_slice()[..index].chunks(2)
-    ) {
-        // *res_ref += a_i * b_i + c_i * d_i;
-        unsafe {
-            let vec_a: __m256d = _mm256_setr_pd(a_i[0].re, a_i[0].im, a_i[1].re, a_i[1].im);
-            let mut vec_b: __m256d = _mm256_setr_pd(b_i[0].re, b_i[0].im, b_i[1].re, b_i[1].im);
-            let vec_c: __m256d = _mm256_setr_pd(c_i[0].re, c_i[0].im, c_i[1].re, c_i[1].im);
-            let mut vec_d: __m256d = _mm256_setr_pd(d_i[0].re, d_i[0].im, d_i[1].re, d_i[1].im);
-
-            let neg: __m256d = _mm256_setr_pd(1.0, -1.0, 1.0, -1.0);
-            let vec_ab = _mm256_mul_pd(vec_a, vec_b);
-            let vec_cd = _mm256_mul_pd(vec_c, vec_d);
-
-            vec_b = _mm256_permute_pd(vec_b, 0x5);
-            vec_b = _mm256_mul_pd(vec_b, neg);
-            vec_d = _mm256_permute_pd(vec_d, 0x5);
-            vec_d = _mm256_mul_pd(vec_d, neg);
-
-            let vec_ab_bis = _mm256_mul_pd(vec_a, vec_b);
-            let vec_cd_bis = _mm256_mul_pd(vec_c, vec_d);
-
-            let res_ref_avx: *mut __m256d = res_ref.as_mut_ptr() as *mut __m256d;
-            *res_ref_avx = _mm256_add_pd(
-                _mm256_add_pd(
-                    _mm256_hsub_pd(vec_ab, vec_ab_bis),
-                    _mm256_hsub_pd(vec_cd, vec_cd_bis),
-                ),
-                *res_ref_avx,
-            );
-        }
-    }
-}
+//#[allow(unused)]
+//fn avx2_uhwatp<C1, C2, C3, C4, C5>(
+//    res: &mut FourierPolynomial<C1>,
+//    poly_1: &FourierPolynomial<C2>,
+//    poly_2: &FourierPolynomial<C3>,
+//    poly_3: &FourierPolynomial<C4>,
+//    poly_4: &FourierPolynomial<C5>,
+//) where
+//    FourierPolynomial<C1>: AsMutTensor<Element = Complex64>,
+//    FourierPolynomial<C2>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C3>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C4>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C5>: AsRefTensor<Element = Complex64>,
+//{
+//    #[cfg(target_arch = "x86")]
+//    use std::arch::x86::*;
+//    #[allow(unused_imports)]
+//    #[cfg(target_arch = "x86_64")]
+//    use std::arch::x86_64::*;
+//
+//    let n = poly_1.as_tensor().len();
+//    let index = n / 2 + 2;
+//    for zip_args!(res_ref, a_i, b_i, c_i, d_i) in zip!(
+//        res.as_mut_tensor().as_mut_slice()[..index].chunks_mut(2),
+//        poly_1.as_tensor().as_slice()[..index].chunks(2),
+//        poly_2.as_tensor().as_slice()[..index].chunks(2),
+//        poly_3.as_tensor().as_slice()[..index].chunks(2),
+//        poly_4.as_tensor().as_slice()[..index].chunks(2)
+//    ) {
+//        // *res_ref += a_i * b_i + c_i * d_i;
+//        unsafe {
+//            let vec_a: __m256d = _mm256_setr_pd(a_i[0].re, a_i[0].im, a_i[1].re, a_i[1].im);
+//            let mut vec_b: __m256d = _mm256_setr_pd(b_i[0].re, b_i[0].im, b_i[1].re, b_i[1].im);
+//            let vec_c: __m256d = _mm256_setr_pd(c_i[0].re, c_i[0].im, c_i[1].re, c_i[1].im);
+//            let mut vec_d: __m256d = _mm256_setr_pd(d_i[0].re, d_i[0].im, d_i[1].re, d_i[1].im);
+//
+//            let neg: __m256d = _mm256_setr_pd(1.0, -1.0, 1.0, -1.0);
+//            let vec_ab = _mm256_mul_pd(vec_a, vec_b);
+//            let vec_cd = _mm256_mul_pd(vec_c, vec_d);
+//
+//            vec_b = _mm256_permute_pd(vec_b, 0x5);
+//            vec_b = _mm256_mul_pd(vec_b, neg);
+//            vec_d = _mm256_permute_pd(vec_d, 0x5);
+//            vec_d = _mm256_mul_pd(vec_d, neg);
+//
+//            let vec_ab_bis = _mm256_mul_pd(vec_a, vec_b);
+//            let vec_cd_bis = _mm256_mul_pd(vec_c, vec_d);
+//
+//            let res_ref_avx: *mut __m256d = res_ref.as_mut_ptr() as *mut __m256d;
+//            *res_ref_avx = _mm256_add_pd(
+//                _mm256_add_pd(
+//                    _mm256_hsub_pd(vec_ab, vec_ab_bis),
+//                    _mm256_hsub_pd(vec_cd, vec_cd_bis),
+//                ),
+//                *res_ref_avx,
+//            );
+//        }
+//    }
+//}
 
 #[allow(unused, clippy::too_many_arguments)]
 fn regular_uthwatp<C1, C2, C3, C4, C5, C6, C7, C8>(
@@ -508,122 +508,122 @@ fn regular_uthwatp<C1, C2, C3, C4, C5, C6, C7, C8>(
     }
 }
 
-#[allow(unused, clippy::too_many_arguments)]
-fn avx2_uthwatp<C1, C2, C3, C4, C5, C6, C7, C8>(
-    result_1: &mut FourierPolynomial<C1>,
-    result_2: &mut FourierPolynomial<C2>,
-    poly_a_1: &FourierPolynomial<C3>,
-    poly_a_2: &FourierPolynomial<C4>,
-    poly_b: &FourierPolynomial<C5>,
-    poly_c_1: &FourierPolynomial<C6>,
-    poly_c_2: &FourierPolynomial<C7>,
-    poly_d: &FourierPolynomial<C8>,
-) where
-    FourierPolynomial<C1>: AsMutTensor<Element = Complex64>,
-    FourierPolynomial<C2>: AsMutTensor<Element = Complex64>,
-    FourierPolynomial<C3>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C4>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C5>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C6>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C7>: AsRefTensor<Element = Complex64>,
-    FourierPolynomial<C8>: AsRefTensor<Element = Complex64>,
-{
-    #[cfg(target_arch = "x86")]
-    use std::arch::x86::*;
-    #[allow(unused_imports)]
-    #[cfg(target_arch = "x86_64")]
-    use std::arch::x86_64::*;
-
-    let n = result_1.as_tensor().len();
-    let index = n / 2 + 2;
-    // we take complex two by two
-    for zip_args!(res_1_i, a_1_i, b_i, c_1_i, d_i, res_2_i, a_2_i, c_2_i) in zip!(
-        result_1.as_mut_tensor().as_mut_slice()[..index].chunks_mut(2),
-        poly_a_1.as_tensor().as_slice()[..index].chunks(2),
-        poly_b.as_tensor().as_slice()[..index].chunks(2),
-        poly_c_1.as_tensor().as_slice()[..index].chunks(2),
-        poly_d.as_tensor().as_slice()[..index].chunks(2),
-        result_2.as_mut_tensor().as_mut_slice()[..index].chunks_mut(2),
-        poly_a_2.as_tensor().as_slice()[..index].chunks(2),
-        poly_c_2.as_tensor().as_slice()[..index].chunks(2)
-    ) {
-        // create avx vectors
-        unsafe {
-            let vec_a1: __m256d = _mm256_setr_pd(
-                a_1_i.get_unchecked(0).re,
-                a_1_i.get_unchecked(0).im,
-                a_1_i.get_unchecked(1).re,
-                a_1_i.get_unchecked(1).im,
-            );
-            let vec_a2: __m256d = _mm256_setr_pd(
-                a_2_i.get_unchecked(0).re,
-                a_2_i.get_unchecked(0).im,
-                a_2_i.get_unchecked(1).re,
-                a_2_i.get_unchecked(1).im,
-            );
-            let vec_c1: __m256d = _mm256_setr_pd(
-                c_1_i.get_unchecked(0).re,
-                c_1_i.get_unchecked(0).im,
-                c_1_i.get_unchecked(1).re,
-                c_1_i.get_unchecked(1).im,
-            );
-            let vec_c2: __m256d = _mm256_setr_pd(
-                c_2_i.get_unchecked(0).re,
-                c_2_i.get_unchecked(0).im,
-                c_2_i.get_unchecked(1).re,
-                c_2_i.get_unchecked(1).im,
-            );
-            let mut vec_b: __m256d = _mm256_setr_pd(
-                b_i.get_unchecked(0).re,
-                b_i.get_unchecked(0).im,
-                b_i.get_unchecked(1).re,
-                b_i.get_unchecked(1).im,
-            );
-            let mut vec_d: __m256d = _mm256_setr_pd(
-                d_i.get_unchecked(0).re,
-                d_i.get_unchecked(0).im,
-                d_i.get_unchecked(1).re,
-                d_i.get_unchecked(1).im,
-            );
-            let neg: __m256d = _mm256_setr_pd(1.0, -1.0, 1.0, -1.0);
-
-            // Multiply
-            let vec_a1b: __m256d = _mm256_mul_pd(vec_a1, vec_b);
-            let vec_a2b: __m256d = _mm256_mul_pd(vec_a2, vec_b);
-            let vec_c1d: __m256d = _mm256_mul_pd(vec_c1, vec_d);
-            let vec_c2d: __m256d = _mm256_mul_pd(vec_c2, vec_d);
-
-            // Permute the real and imaginary elements of glwe
-            vec_b = _mm256_permute_pd(vec_b, 0x5);
-            vec_d = _mm256_permute_pd(vec_d, 0x5);
-
-            // Negate the imaginary elements of glwe
-            vec_b = _mm256_mul_pd(vec_b, neg);
-            vec_d = _mm256_mul_pd(vec_d, neg);
-
-            // Multiply
-            let vec_a1b_bis: __m256d = _mm256_mul_pd(vec_a1, vec_b);
-            let vec_a2b_bis: __m256d = _mm256_mul_pd(vec_a2, vec_b);
-            let vec_c1d_bis: __m256d = _mm256_mul_pd(vec_c1, vec_d);
-            let vec_c2d_bis: __m256d = _mm256_mul_pd(vec_c2, vec_d);
-
-            let res_1_ref = res_1_i.as_mut_ptr() as *mut __m256d;
-            *res_1_ref = _mm256_add_pd(
-                _mm256_add_pd(
-                    _mm256_hsub_pd(vec_a1b, vec_a1b_bis),
-                    _mm256_hsub_pd(vec_c1d, vec_c1d_bis),
-                ),
-                *res_1_ref,
-            );
-            let res_2_ref = res_2_i.as_mut_ptr() as *mut __m256d;
-
-            *res_2_ref = _mm256_add_pd(
-                _mm256_add_pd(
-                    _mm256_hsub_pd(vec_a2b, vec_a2b_bis),
-                    _mm256_hsub_pd(vec_c2d, vec_c2d_bis),
-                ),
-                *res_2_ref,
-            );
-        }
-    }
-}
+//#[allow(unused, clippy::too_many_arguments)]
+//fn avx2_uthwatp<C1, C2, C3, C4, C5, C6, C7, C8>(
+//    result_1: &mut FourierPolynomial<C1>,
+//    result_2: &mut FourierPolynomial<C2>,
+//    poly_a_1: &FourierPolynomial<C3>,
+//    poly_a_2: &FourierPolynomial<C4>,
+//    poly_b: &FourierPolynomial<C5>,
+//    poly_c_1: &FourierPolynomial<C6>,
+//    poly_c_2: &FourierPolynomial<C7>,
+//    poly_d: &FourierPolynomial<C8>,
+//) where
+//    FourierPolynomial<C1>: AsMutTensor<Element = Complex64>,
+//    FourierPolynomial<C2>: AsMutTensor<Element = Complex64>,
+//    FourierPolynomial<C3>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C4>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C5>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C6>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C7>: AsRefTensor<Element = Complex64>,
+//    FourierPolynomial<C8>: AsRefTensor<Element = Complex64>,
+//{
+//    #[cfg(target_arch = "x86")]
+//    use std::arch::x86::*;
+//    #[allow(unused_imports)]
+//    #[cfg(target_arch = "x86_64")]
+//    use std::arch::x86_64::*;
+//
+//    let n = result_1.as_tensor().len();
+//    let index = n / 2 + 2;
+//    // we take complex two by two
+//    for zip_args!(res_1_i, a_1_i, b_i, c_1_i, d_i, res_2_i, a_2_i, c_2_i) in zip!(
+//        result_1.as_mut_tensor().as_mut_slice()[..index].chunks_mut(2),
+//        poly_a_1.as_tensor().as_slice()[..index].chunks(2),
+//        poly_b.as_tensor().as_slice()[..index].chunks(2),
+//        poly_c_1.as_tensor().as_slice()[..index].chunks(2),
+//        poly_d.as_tensor().as_slice()[..index].chunks(2),
+//        result_2.as_mut_tensor().as_mut_slice()[..index].chunks_mut(2),
+//        poly_a_2.as_tensor().as_slice()[..index].chunks(2),
+//        poly_c_2.as_tensor().as_slice()[..index].chunks(2)
+//    ) {
+//        // create avx vectors
+//        unsafe {
+//            let vec_a1: __m256d = _mm256_setr_pd(
+//                a_1_i.get_unchecked(0).re,
+//                a_1_i.get_unchecked(0).im,
+//                a_1_i.get_unchecked(1).re,
+//                a_1_i.get_unchecked(1).im,
+//            );
+//            let vec_a2: __m256d = _mm256_setr_pd(
+//                a_2_i.get_unchecked(0).re,
+//                a_2_i.get_unchecked(0).im,
+//                a_2_i.get_unchecked(1).re,
+//                a_2_i.get_unchecked(1).im,
+//            );
+//            let vec_c1: __m256d = _mm256_setr_pd(
+//                c_1_i.get_unchecked(0).re,
+//                c_1_i.get_unchecked(0).im,
+//                c_1_i.get_unchecked(1).re,
+//                c_1_i.get_unchecked(1).im,
+//            );
+//            let vec_c2: __m256d = _mm256_setr_pd(
+//                c_2_i.get_unchecked(0).re,
+//                c_2_i.get_unchecked(0).im,
+//                c_2_i.get_unchecked(1).re,
+//                c_2_i.get_unchecked(1).im,
+//            );
+//            let mut vec_b: __m256d = _mm256_setr_pd(
+//                b_i.get_unchecked(0).re,
+//                b_i.get_unchecked(0).im,
+//                b_i.get_unchecked(1).re,
+//                b_i.get_unchecked(1).im,
+//            );
+//            let mut vec_d: __m256d = _mm256_setr_pd(
+//                d_i.get_unchecked(0).re,
+//                d_i.get_unchecked(0).im,
+//                d_i.get_unchecked(1).re,
+//                d_i.get_unchecked(1).im,
+//            );
+//            let neg: __m256d = _mm256_setr_pd(1.0, -1.0, 1.0, -1.0);
+//
+//            // Multiply
+//            let vec_a1b: __m256d = _mm256_mul_pd(vec_a1, vec_b);
+//            let vec_a2b: __m256d = _mm256_mul_pd(vec_a2, vec_b);
+//            let vec_c1d: __m256d = _mm256_mul_pd(vec_c1, vec_d);
+//            let vec_c2d: __m256d = _mm256_mul_pd(vec_c2, vec_d);
+//
+//            // Permute the real and imaginary elements of glwe
+//            vec_b = _mm256_permute_pd(vec_b, 0x5);
+//            vec_d = _mm256_permute_pd(vec_d, 0x5);
+//
+//            // Negate the imaginary elements of glwe
+//            vec_b = _mm256_mul_pd(vec_b, neg);
+//            vec_d = _mm256_mul_pd(vec_d, neg);
+//
+//            // Multiply
+//            let vec_a1b_bis: __m256d = _mm256_mul_pd(vec_a1, vec_b);
+//            let vec_a2b_bis: __m256d = _mm256_mul_pd(vec_a2, vec_b);
+//            let vec_c1d_bis: __m256d = _mm256_mul_pd(vec_c1, vec_d);
+//            let vec_c2d_bis: __m256d = _mm256_mul_pd(vec_c2, vec_d);
+//
+//            let res_1_ref = res_1_i.as_mut_ptr() as *mut __m256d;
+//            *res_1_ref = _mm256_add_pd(
+//                _mm256_add_pd(
+//                    _mm256_hsub_pd(vec_a1b, vec_a1b_bis),
+//                    _mm256_hsub_pd(vec_c1d, vec_c1d_bis),
+//                ),
+//                *res_1_ref,
+//            );
+//            let res_2_ref = res_2_i.as_mut_ptr() as *mut __m256d;
+//
+//            *res_2_ref = _mm256_add_pd(
+//                _mm256_add_pd(
+//                    _mm256_hsub_pd(vec_a2b, vec_a2b_bis),
+//                    _mm256_hsub_pd(vec_c2d, vec_c2d_bis),
+//                ),
+//                *res_2_ref,
+//            );
+//        }
+//    }
+//}
