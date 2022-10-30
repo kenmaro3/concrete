@@ -74,7 +74,7 @@ impl BooleanParameters {
 }
 
 pub const DEBUG_PARAMETERS: BooleanParameters = BooleanParameters {
-    lwe_dimension: LweDimension(16),
+    lwe_dimension: LweDimension(8),
     glwe_dimension: GlweDimension(1),
     polynomial_size: PolynomialSize(1024),
     lwe_modular_std_dev: StandardDev(0.0), // 2^{-13.44...}

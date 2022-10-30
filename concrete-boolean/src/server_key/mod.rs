@@ -31,8 +31,8 @@ use serde::{Deserialize, Serialize};
 /// * `bootstrapping_key` - a public key, used to perform the bootstrapping operation.
 #[derive(Serialize, Clone, Deserialize, PartialEq, Debug)]
 pub struct ServerKey {
-    pub(crate) key_switching_key: LweKeyswitchKey<Vec<u32>>,
-    pub(crate) bootstrapping_key: FourierBootstrapKey<AlignedVec<Complex64>, u32>,
+    pub key_switching_key: LweKeyswitchKey<Vec<u32>>,
+    pub bootstrapping_key: FourierBootstrapKey<AlignedVec<Complex64>, u32>,
 }
 
 impl ServerKey {
@@ -62,7 +62,7 @@ impl ServerKey {
             cks.parameters.lwe_dimension,
         );
         let mut encryption_generator = EncryptionRandomGenerator::new(None);
-        coef_bsk.par_fill_with_new_key(
+        coef_bsk.fill_with_new_key(
             &cks.lwe_secret_key,
             &cks.glwe_secret_key,
             cks.parameters.glwe_modular_std_dev,

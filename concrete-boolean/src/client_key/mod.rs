@@ -13,7 +13,7 @@ use concrete_core::crypto::secret::generators::{EncryptionRandomGenerator, Secre
 use concrete_core::crypto::secret::{GlweSecretKey, LweSecretKey};
 use serde::{Deserialize, Serialize};
 use crate::parameters::DEBUG_PARAMETERS;
-// use wasm_bindgen::prelude::*;
+use wasm_bindgen::prelude::*;
 
 /// A structure containing the client key, which must be kept secret.
 ///
@@ -23,6 +23,7 @@ use crate::parameters::DEBUG_PARAMETERS;
 /// * `glwe_secret_key` - a GLWE secret key, used to generate the bootstrapping keys and key
 /// switching keys.
 /// * `parameters` - the cryptographic parameter set.
+#[wasm_bindgen]
 #[derive(Serialize, Clone, Deserialize, PartialEq, Debug)]
 pub struct ClientKey {
     pub(crate) lwe_secret_key: LweSecretKey<BinaryKeyKind, Vec<u32>>,
