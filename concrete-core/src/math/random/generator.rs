@@ -5,7 +5,8 @@ use crate::math::random::{
 use crate::math::tensor::{AsMutSlice, AsMutTensor, Tensor};
 use concrete_commons::numeric::{FloatingPoint, Numeric};
 //use concrete_csprng::RandomGenerator as RandomGeneratorImpl;
-use rand::Rng;
+//use rand::Rng;
+use chrono::{DateTime, TimeZone, NaiveDateTime, Utc};
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
@@ -66,7 +67,9 @@ impl Iterator for RandomGenerator{
 impl RandomGenerator {
     pub(crate) fn generate_next(&mut self) -> u8 {
         // self.0.generate_next()
-        rand::thread_rng().gen()
+        //rand::thread_rng().gen()
+        let utc_datetime: DateTime<Utc> = Utc::now();
+        utc_datetime.timestamp_subsec_nanos() as u8
     }
 
     /// Generates a new generator, optionally seeding it with the given value.
