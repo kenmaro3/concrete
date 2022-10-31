@@ -238,6 +238,7 @@ impl PublicKey{
     }
 
     pub fn encode(&self, x: u8) -> [bool; 8]{
+        // encode res[0] as msb, res[7] as lsb
         let mut res = [false; 8];
         let mut cnt = 0;
         let mut tmp = x;

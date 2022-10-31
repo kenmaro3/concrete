@@ -368,94 +368,106 @@ pub fn decrypt_8bit(x: [Ciphertext; 8], client_key: &ClientKey) -> [bool; 8]{
     res
 }
 
-pub fn plain_8bits_a_smaller_than_b(a: [bool; 8], b: [bool; 8]) -> bool{
-    let mut i = 0;
-    let mut res = false;
-    let mut break_flag = false;
-    let mut found_t_flag = false;
-    while !break_flag{
-        let index = 7-i;
-        res = plain_a_smaller_than_b(a[index], b[index]);
-        if (i == 0 && res){
-            res = true;
-            break
-        }
-        else if(i != 0 && res){
-            found_t_flag = true;
-        }
 
-        if (found_t_flag && !res){
-            res = true;
-            break
-        }
+// pub fn cipher_8bits_a_bigger_than_b(a: &[Ciphertext; 8], b: &[Ciphertext; 8], calculation_key: &ServerKey, client_key: &ClientKey) -> bool{
+//     let mut i = 0;
+//     let mut res = false;
+//     while !res{
+//         let tmp = cipher_a_bigger_than_b(&a[i], &b[i], calculation_key);
+//         res = client_key.decrypt(&tmp);
 
-        i += 1;
-        if i == 8{
-            break
-        }
-    }
-    res
+//         i += 1;
+//         if i == 8{
+//             break
+//         }
+//     }
+//     res
+// }
 
-}
-
-pub fn cipher_8bits_a_smaller_than_b(a: &[Ciphertext; 8], b: &[Ciphertext; 8], calculation_key: &ServerKey, client_key: &ClientKey) -> bool{
-    let mut i = 0;
-    let mut res = false;
-    while !res{
-        let tmp = cipher_a_smaller_than_b(&a[i], &b[i], calculation_key);
-        res = client_key.decrypt(&tmp);
-
-        i += 1;
-        if i == 8{
-            break
-        }
-    }
+pub fn cipher_a_bigger_than_b(a: &Ciphertext, b: &Ciphertext, calculation_key: &ServerKey) -> Ciphertext{
+    let tmp = calculation_key.not(b);
+    let res = calculation_key.and(&tmp, a);
     res
 }
 
-pub fn cipher_8bits_a_smaller_than_b_whole(a: &[Ciphertext; 8], b: &[Ciphertext; 8], calculation_key: &ServerKey) -> [Ciphertext; 8]{
+
+pub fn cipher_8bits_a_bigger_than_b(a: &[Ciphertext; 8], b: &[Ciphertext; 8], calculation_key: &ServerKey) -> [Ciphertext; 8]{
     let mut res = get_8_ciphers();
     for i in 0..8{
-        res[i] = cipher_a_smaller_than_b(&a[i], &b[i], &calculation_key);
+        res[i] = cipher_a_bigger_than_b(&a[i], &b[i], &calculation_key);
     };
     res
 }
 
-pub fn postprocess_8bits_comparison_result(x: [bool; 8]) -> bool{
-    let mut res = false;
-    let mut sum = 0;
+pub fn cipher_8bits_a_xnor_b(a: &[Ciphertext; 8], b: &[Ciphertext; 8], calculation_key: &ServerKey) -> [Ciphertext; 8]{
+    let mut res = get_8_ciphers();
     for i in 0..8{
-        sum += x[i] as i32;
+        res[i] = calculation_key.xnor(&a[i], &b[i]);
     };
+    res
+}
 
-    if sum > 0{
-        true
-    }
-    else{
-        false
-    }
+fn compare_helper(a_bigger_b: [bool; 8], a_equal_b: [bool; 8]) -> bool{
+    for i in 0..8{
+        if a_bigger_b[7-i]{
+            return true;
+        }
+        else{
+            if !a_equal_b[7-i]{
+                return false;
+            }
+            else{
+                continue;
+            }
+        }
+    };
+    return false;
+}
+
+pub fn cipher_8bits_compare_a_b(a: &[Ciphertext; 8], b: &[Ciphertext; 8], calculation_key: &ServerKey, client_key: &ClientKey) -> bool{
+    let a_bigger_b = cipher_8bits_a_bigger_than_b(a, b, calculation_key);
+    let a_equal_b = cipher_8bits_a_xnor_b(a, b, calculation_key);
+
+    let dec_a_bigger_b = client_key.decrypt_8bit(a_bigger_b);
+    let dec_a_equal_b = client_key.decrypt_8bit(a_equal_b);
+
+    compare_helper(dec_a_bigger_b, dec_a_equal_b)
 
 }
 
+pub fn plain_a_bigger_than_b(a: bool, b: bool) -> bool{
+    a & !b
+}
 
-fn plain_8bits_a_smaller_than_b_whole(a: [bool; 8], b: [bool; 8]) -> [bool; 8]{
+fn plain_8bits_a_bigger_than_b(a: [bool; 8], b: [bool; 8]) -> [bool; 8]{
     let mut res = [false; 8];
     for i in 0..8{
-        res[i] = plain_a_smaller_than_b(a[i], b[i]);
+        res[i] = plain_a_bigger_than_b(a[i], b[i]);
     };
     res
-
 }
 
-pub fn plain_a_smaller_than_b(a: bool, b: bool) -> bool{
-    !a & b
-}
-
-pub fn cipher_a_smaller_than_b(a: &Ciphertext, b: &Ciphertext, calculation_key: &ServerKey) -> Ciphertext{
-    let tmp = calculation_key.not(a);
-    let res = calculation_key.and(&tmp, b);
+fn plain_8bits_a_xnor_b(a: [bool; 8], b: [bool; 8]) -> [bool; 8]{
+    let mut res = [false; 8];
+    for i in 0..8{
+        res[i] = !(a[i] ^ b[i]);
+    };
     res
 }
+
+pub fn plain_8bits_compare_a_b(a: [bool; 8], b: [bool; 8]) -> bool{
+    //println!("a: {:?}", a);
+    //println!("b: {:?}", b);
+
+    let a_bigger_b = plain_8bits_a_bigger_than_b(a, b);
+    let a_equal_b = plain_8bits_a_xnor_b(a, b);
+    //println!("bigger: {:?}", a_bigger_b);
+    //println!("equal: {:?}", a_equal_b);
+
+    compare_helper(a_bigger_b, a_equal_b)
+
+}
+
 
 
 pub fn generate_ksk(server_sk: &ClientKey, user_sk: &ClientKey) -> LweKeyswitchKey<Vec<u32>>{
