@@ -4,9 +4,11 @@
 
 use concrete_core::crypto::lwe::LweCiphertext;
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
 
 /// A structure containing a ciphertext, meant to encrypt a Boolean message.
 ///
 /// It is used to evaluate a Boolean circuits homomorphically.
+#[wasm_bindgen]
 #[derive(Serialize, Clone, Deserialize)]
 pub struct Ciphertext(pub(crate) LweCiphertext<Vec<u32>>);

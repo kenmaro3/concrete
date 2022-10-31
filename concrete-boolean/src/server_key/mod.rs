@@ -33,6 +33,7 @@ use serde::{Deserialize, Serialize};
 pub struct ServerKey {
     pub key_switching_key: LweKeyswitchKey<Vec<u32>>,
     pub bootstrapping_key: FourierBootstrapKey<AlignedVec<Complex64>, u32>,
+    pub bootstrapping_key_standard: StandardBootstrapKey<Vec<u32>>
 }
 
 impl ServerKey {
@@ -104,6 +105,7 @@ impl ServerKey {
         let sks: ServerKey = ServerKey {
             key_switching_key: ksk,
             bootstrapping_key: fourier_bsk,
+            bootstrapping_key_standard: coef_bsk
         };
         sks
     }

@@ -41,6 +41,7 @@
 
 use crate::client_key::ClientKey;
 use crate::ciphertext::Ciphertext;
+use crate::client_key::PublicKey;
 use crate::parameters::DEFAULT_PARAMETERS;
 use crate::parameters::DEBUG_PARAMETERS;
 use crate::server_key::ServerKey;
@@ -49,7 +50,8 @@ use concrete_core::crypto::lwe::LweCiphertext;
 use concrete_core::crypto::lwe::LweKeyswitchKey;
 use concrete_commons::parameters::LweDimension;
 use concrete_core::crypto::secret::generators::EncryptionRandomGenerator;
-
+use concrete_core::crypto::bootstrap::{Bootstrap, FourierBootstrapKey, StandardBootstrapKey};
+use concrete_core::math::fft::{AlignedVec, Complex64};
 
 
 pub mod ciphertext;
@@ -500,4 +502,28 @@ pub fn apply_keyswitch_8bits(ct: &[Ciphertext; 8], ksk: &LweKeyswitchKey<Vec<u32
         res[i] = apply_keyswitch(&ct[i], ksk);
     };
     res
+}
+
+pub fn deserialize_server_key(pk_str: String, ksk_str: String, bsk_standard_str: String) -> ServerKey{
+   let server_pk: PublicKey = serde_json::from_str(&pk_str).unwrap();
+   let deser_ksk: LweKeyswitchKey<Vec<u32>> = serde_json::from_str(&ksk_str).unwrap();
+   let deser_bsk_standard: StandardBootstrapKey<Vec<u32>> = serde_json::from_str(&bsk_standard_str).unwrap();
+   let mut deser_bsk: FourierBootstrapKey<AlignedVec<Complex64>, u32> = FourierBootstrapKey::allocate(
+      Complex64::new(0., 0.),
+      server_pk.parameters.glwe_dimension.to_glwe_size(),
+      server_pk.parameters.polynomial_size,
+      server_pk.parameters.pbs_level,
+      server_pk.parameters.pbs_base_log,
+      server_pk.parameters.lwe_dimension,
+   );
+   deser_bsk.fill_with_forward_fourier(&deser_bsk_standard);
+
+   let deser_server_calculation_key: ServerKey = ServerKey { key_switching_key: deser_ksk, bootstrapping_key: deser_bsk, bootstrapping_key_standard: deser_bsk_standard};
+
+   deser_server_calculation_key
+}
+
+pub fn deserialize_ksk(ksk_str: String) -> LweKeyswitchKey<Vec<u32>>{
+   serde_json::from_str(&ksk_str).unwrap()
+
 }

@@ -25,17 +25,17 @@ use concrete_commons::parameters::{
 use serde::{Deserialize, Serialize};
 
 /// A set of cryptographic parameters for homomorphic Boolean circuit evaluation.
-#[derive(Serialize, Clone, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Clone, Deserialize, Debug, PartialEq, Copy)]
 pub struct BooleanParameters {
-    pub(crate) lwe_dimension: LweDimension,
-    pub(crate) glwe_dimension: GlweDimension,
-    pub(crate) polynomial_size: PolynomialSize,
-    pub(crate) lwe_modular_std_dev: StandardDev,
-    pub(crate) glwe_modular_std_dev: StandardDev,
-    pub(crate) pbs_base_log: DecompositionBaseLog,
-    pub(crate) pbs_level: DecompositionLevelCount,
-    pub(crate) ks_base_log: DecompositionBaseLog,
-    pub(crate) ks_level: DecompositionLevelCount,
+    pub lwe_dimension: LweDimension,
+    pub glwe_dimension: GlweDimension,
+    pub polynomial_size: PolynomialSize,
+    pub lwe_modular_std_dev: StandardDev,
+    pub glwe_modular_std_dev: StandardDev,
+    pub pbs_base_log: DecompositionBaseLog,
+    pub pbs_level: DecompositionLevelCount,
+    pub ks_base_log: DecompositionBaseLog,
+    pub ks_level: DecompositionLevelCount,
 }
 
 impl BooleanParameters {

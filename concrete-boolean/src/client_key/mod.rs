@@ -13,7 +13,6 @@ use concrete_core::crypto::secret::generators::{EncryptionRandomGenerator, Secre
 use concrete_core::crypto::secret::{GlweSecretKey, LweSecretKey};
 use serde::{Deserialize, Serialize};
 use crate::parameters::DEBUG_PARAMETERS;
-use wasm_bindgen::prelude::*;
 
 /// A structure containing the client key, which must be kept secret.
 ///
@@ -23,12 +22,11 @@ use wasm_bindgen::prelude::*;
 /// * `glwe_secret_key` - a GLWE secret key, used to generate the bootstrapping keys and key
 /// switching keys.
 /// * `parameters` - the cryptographic parameter set.
-#[wasm_bindgen]
 #[derive(Serialize, Clone, Deserialize, PartialEq, Debug)]
 pub struct ClientKey {
     pub(crate) lwe_secret_key: LweSecretKey<BinaryKeyKind, Vec<u32>>,
     pub(crate) glwe_secret_key: GlweSecretKey<BinaryKeyKind, Vec<u32>>,
-    pub(crate) parameters: BooleanParameters,
+    pub parameters: BooleanParameters,
 }
 
 impl ClientKey {
@@ -169,22 +167,22 @@ impl ClientKey {
     }
 
     pub fn generate_public_key(&self) -> PublicKey{
-        let tmp0 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
-        let tmp1 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
-        let tmp2 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
-        let tmp3 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
-        let tmp4 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
-        let tmp5 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
-        let tmp6 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
-        let tmp7 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
-        let mut res: [Ciphertext; 8] = [tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7];
+        //let tmp0 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        // let tmp1 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        // let tmp2 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        // let tmp3 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        // let tmp4 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        // let tmp5 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        // let tmp6 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        // let tmp7 = Ciphertext(LweCiphertext::allocate(0_u32, DEBUG_PARAMETERS.lwe_dimension.to_lwe_size()));
+        // let mut res: [Ciphertext; 8] = [tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7];
 
-        for i in 0..8{
-            res[i] = self.zero_encrypt();
-        };
+        let tmp0 = self.zero_encrypt();
+
 
         let pub_key = PublicKey{
-            key: res
+            key: tmp0,
+            parameters: self.parameters
         };
 
         pub_key
@@ -216,7 +214,8 @@ impl ClientKey {
 
 #[derive(Serialize, Clone, Deserialize)]
 pub struct PublicKey{
-    pub key: [Ciphertext; 8]
+    pub key: Ciphertext,
+    pub parameters: BooleanParameters,
 }
 
 impl PublicKey{
@@ -228,7 +227,7 @@ impl PublicKey{
             Plaintext(PLAINTEXT_FALSE)
         };
 
-        let tmp = &mut self.key[0].clone();
+        let tmp = &mut self.key.clone();
 
         let (body, mask)= tmp.0.get_mut_body_and_mask();
 
